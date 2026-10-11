@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Closed 360 – 360° Karachi Campus Tour</title>
+<meta name="description" content="Walk through the Closed 360 Karachi campus in 360°: lounge, reception, classroom, podcast studio, mentor room, tech library and fulfillment hub.">
+<link rel="icon" href="assets/favicon.png">
+<link rel="stylesheet" href="style.css">
+<style>
+html,body{height:100%;overflow:hidden;background:#000}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+#gl:active{cursor:grabbing}
+#fade{position:fixed;inset:0;background:#0b1d27;opacity:0;pointer-events:none;transition:opacity .4s}
+#fade.on{opacity:1}
+#hs{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.hot{position:absolute;left:0;top:0;pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;color:#fff;font:inherit;cursor:pointer;will-change:transform}
+.hot .pin{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;background:radial-gradient(circle,#17a090 0%,#0b1d27 100%);border:2px solid #fff;box-shadow:0 0 0 5px rgba(217,178,95,.5);animation:pulse 2.2s infinite}
+.hot.info .pin{width:36px;height:36px;font-size:16px;font-weight:700;font-family:Georgia,serif;background:#d9b25f;color:#14232b}
+.hot .lab{background:rgba(6,13,23,.92);border:1px solid var(--gold);border-radius:99px;padding:5px 12px;font-size:12px;white-space:nowrap}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(23,160,144,.8),0 0 0 5px rgba(217,178,95,.5)}70%{box-shadow:0 0 0 16px rgba(23,160,144,0),0 0 0 5px rgba(217,178,95,.5)}100%{box-shadow:0 0 0 0 rgba(23,160,144,0),0 0 0 5px rgba(217,178,95,.5)}}
+#top{position:fixed;left:0;right:0;top:0;z-index:5;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:calc(12px + env(safe-area-inset-top,0px)) 14px 0;pointer-events:none}
+#top>*{pointer-events:auto}
+#top .lg img{height:46px;border-radius:10px;box-shadow:0 0 0 2px var(--gold)}
+#tools{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+#tools .btn{background:rgba(11,29,39,.82);backdrop-filter:blur(8px);padding:9px 13px;font-size:14px;border-width:1px}
+#tools .btn.on,#tools .btn.gold{background:var(--gold);color:#14232b}
+#tools .btn.back{border-width:2px}
+#card{position:fixed;left:14px;bottom:calc(70px + env(safe-area-inset-bottom,0px));z-index:5;width:min(430px,calc(100vw - 28px));background:rgba(11,29,39,.84);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+#card h2{font-size:24px;margin-bottom:6px}#card p{margin:0 0 12px;line-height:1.55;font-size:14.5px}
+#card small{display:block;margin-top:10px;opacity:.6;font-size:11px}
+#card .ins{margin:0 0 12px;padding:9px 12px;border-left:3px solid var(--gold);background:rgba(217,178,95,.12);border-radius:8px;font-size:14px;line-height:1.5}
+#card .ins[hidden]{display:none}
+#chips{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;justify-content:flex-start;gap:8px;overflow-x:auto;padding:0 14px calc(14px + env(safe-area-inset-bottom,0px));scrollbar-width:none}
+#chips button:first-child{margin-left:auto}#chips button:last-child{margin-right:auto}
+#chips button{white-space:nowrap;padding:8px 16px;font-size:13px;background:rgba(11,29,39,.84);border-width:1px}
+#chips button.on{background:var(--gold);color:#14232b}
+@media (max-width:640px){#top .lg img{height:38px}#tools .btn{padding:8px 10px;font-size:13px}#card{bottom:calc(64px + env(safe-area-inset-bottom,0px))}}
+@media (prefers-reduced-motion:reduce){.hot .pin{animation:none}}
+</style></head>
+<body data-page="tour">
+<canvas id="gl" aria-label="360 degree view of the Karachi campus"></canvas><div id="fade"></div><div id="hs"></div>
+<div id="top"><a class="lg" href="index.html"><img src="assets/logo.jpg" alt="Closed 360 – back to home"></a>
+ <div id="tools"><button class="btn" id="gyro" type="button">Motion</button><button class="btn on" id="auto" type="button">Auto-rotate</button><button class="btn" id="full" type="button">Fullscreen</button><button class="btn gold" type="button" data-demo>Free Demo</button><a class="btn back" href="index.html">← Back to home</a></div></div>
+<div id="card" aria-live="polite"></div><nav id="chips" aria-label="Rooms"></nav>
+<div id="vmodal" class="modal" hidden><div class="mb" style="width:min(640px,100%)"><button class="btn x" id="vclose" type="button" aria-label="Close">✕</button><video id="vvid" controls loop playsinline style="width:100%;border-radius:12px"></video></div></div>
+<noscript><p style="position:fixed;inset:auto 16px 16px;background:#10283a;padding:16px;border-radius:12px">Please turn on JavaScript to see the 360° tour.</p></noscript>
+<script src="site.js"></script>
+<script>
+const PAN={out:'assets/pano/out.jpg',wait:'assets/pano/wait.jpg',rec:'assets/pano/rec.jpg',cls:'assets/pano/cls.jpg',studio:'assets/pano/studio.jpg',mentor:'assets/pano/mentor.jpg',lib:'assets/pano/lib.jpg',disp:'assets/pano/disp.jpg'};
+const MEDIA={admit:{v:'assets/admit.mp4',p:'assets/admit.jpg'},learn:{v:'assets/learn.mp4',p:'assets/learn.jpg'}};
+const $=id=>document.getElementById(id),mk=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+const toLL=(x,y,s)=>{const u=s.n?(x-s.n)/(s.dim[0]-s.n):x/s.dim[0];return{lon:(u-.5)*360,lat:(.5-y/s.dim[1])*180}};
+const BIG=[2576,1274],SM=[1774,887];
+const SC={
+ out:{k:'Outside',t:'Closed 360, Karachi',d:'Walk in through the gate and take the tour.',dim:BIG,n:170,start:[1285,650],
+  hs:[{x:1335,y:760,to:'wait',l:'Enter the institute'}],info:[]},
+ wait:{k:'Lounge',t:'Waiting lounge',d:'Take a seat in the lounge, or walk down the corridor to the reception desk.',dim:[1784,881],start:[1000,480],
+  hs:[{x:1330,y:470,to:'rec',l:'Walk to reception'},{x:890,y:450,to:'out',l:'Step outside'}],info:[]},
+ rec:{k:'Reception',t:'Reception and admissions',d:'This is where you take admission. Our team walks you through the course and the sign-up.',dim:BIG,start:[1850,650],
+  hs:[{x:182,y:660,to:'cls',l:'Go to the classroom'},{x:565,y:670,to:'wait',l:'Back to the lounge'}],
+  info:[{x:1625,y:700,t:'Meet your guide',d:'Our admissions guide answers your questions and helps you with the sign-up.'}],vid:MEDIA.admit},
+ cls:{k:'Classroom',t:'Month 1 – Learn',d:'Live classes with your teacher. Understand how e-commerce works, then build your own store in Month 2 and launch it in Month 3.',dim:BIG,start:[1355,650],
+  hs:[{x:2420,y:700,to:'studio',l:'Podcast studio'},{x:1290,y:990,to:'rec',l:'Back to reception'}],
+  info:[{x:1355,y:640,t:'Meet your teacher',d:'Your teacher explains every step in live classes, so you learn by doing.'}],vid:MEDIA.learn},
+ studio:{k:'Studio',t:'Podcast and ad studio',d:'A studio for recording podcasts and shooting video ad creatives.',dim:SM,n:130,start:[880,480],
+  hs:[{x:1625,y:430,to:'mentor',l:'Mentor room'},{x:500,y:700,to:'cls',l:'Back to the classroom'}],info:[]},
+ mentor:{k:'Mentor',t:'Mentor room',d:'Sit down with a mentor to talk about strategy, marketing, sales and growth.',dim:SM,n:130,start:[835,480],
+  hs:[{x:1690,y:400,to:'lib',l:'Tech library'},{x:900,y:640,to:'studio',l:'Back to the studio'}],info:[]},
+ lib:{k:'Library',t:'Research library',d:'Workspaces and books for winning-product hunting, sourcing and e-commerce research.',dim:SM,n:130,start:[780,480],
+  hs:[{x:1435,y:420,to:'disp',l:'Fulfillment hub'},{x:250,y:430,to:'mentor',l:'Back to the mentor room'}],info:[]},
+ disp:{k:'Fulfillment',t:'Fulfillment hub',d:'See how orders are packed and shipped: parcel packing, couriers and returns.',dim:SM,n:130,start:[860,480],
+  hs:[{x:1490,y:430,to:'out',l:'Back to the main gate'},{x:640,y:380,to:'lib',l:'Back to the tech library'}],info:[]}
+};
+Object.values(SC).forEach(s=>{[...s.hs,...s.info].forEach(h=>Object.assign(h,toLL(h.x,h.y,s)));s.st=toLL(s.start[0],s.start[1],s)});
+const cv=$('gl'),gl=cv.getContext('webgl2',{antialias:false,alpha:false});
+let prog,uni={},TX={},tex=null;const order=[];
+if(gl){
+ const vs='#version 300 es\nin vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
+ const fs=`#version 300 es
+precision highp float;uniform sampler2D tx;uniform vec2 res;uniform float yaw,pitch,fovy;out vec4 o;
+void main(){vec2 p=(gl_FragCoord.xy/res)*2.-1.;p.x*=res.x/res.y;float f=tan(fovy*.5);vec3 d=normalize(vec3(p.x*f,p.y*f,-1.));
+float cp=cos(pitch),sp=sin(pitch);d=vec3(d.x,d.y*cp-d.z*sp,d.y*sp+d.z*cp);
+float cy=cos(yaw),sy=sin(yaw);d=vec3(d.x*cy-d.z*sy,d.y,d.x*sy+d.z*cy);
+float lon=atan(d.x,-d.z),lat=asin(clamp(d.y,-1.,1.));
+vec2 uv=vec2(lon/6.2831853+.5,.5-lat/3.14159265);vec2 u2=vec2(fract(uv.x+.5)-.5,uv.y);
+vec2 gx=dFdx(uv),gy=dFdy(uv),hx=dFdx(u2),hy=dFdy(u2);
+if(dot(hx,hx)+dot(hy,hy)<dot(gx,gx)+dot(gy,gy)){gx=hx;gy=hy;}
+o=textureGrad(tx,uv,gx,gy);}`;
+ const sh=(t,s)=>{const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);return x};
+ prog=gl.createProgram();gl.attachShader(prog,sh(gl.VERTEX_SHADER,vs));gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(prog);gl.useProgram(prog);
+ const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+ const loc=gl.getAttribLocation(prog,'a');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+ ['tx','res','yaw','pitch','fovy'].forEach(n=>uni[n]=gl.getUniformLocation(prog,n));
+}
+function ensure(id,cb){
+ if(TX[id]){const q=order.indexOf(id);if(q>-1)order.splice(q,1);order.push(id);cb(TX[id]);return}
+ const im=new Image();im.onload=()=>{const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,im);gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);TX[id]=t;order.push(id);
+  while(order.length>4){const k=order.find(x=>x!==id&&x!==cur);if(!k)break;order.splice(order.indexOf(k),1);gl.deleteTexture(TX[k]);delete TX[k]}cb(t)};
+ im.src=PAN[id];
+}
+let hov=false,cur=null,busy=false,yaw=0,pitch=0,fov=80,fovT=80,vy=0,vp=0,drag=false,auto=true,gyroOn=false,g0=null,lx=0,ly=0,pd=0;const pts=new Map();
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),rad=Math.PI/180;
+function size(){const dpr=Math.min(devicePixelRatio||1,1.75);cv.width=Math.round(innerWidth*dpr);cv.height=Math.round(innerHeight*dpr);if(gl)gl.viewport(0,0,cv.width,cv.height)}
+addEventListener('resize',size);size();
+const dist=()=>{const a=[...pts.values()];return Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1])};
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);drag=true;lx=e.clientX;ly=e.clientY;vy=vp=0;setAuto(false);if(pts.size==2)pd=dist()});
+cv.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;pts.set(e.pointerId,[e.clientX,e.clientY]);
+ if(pts.size==2){const nd=dist();fovT=clamp(fovT*pd/nd,40,100);pd=nd;return}
+ if(drag){const k=fov*rad/innerHeight,dx=e.clientX-lx,dy=e.clientY-ly;lx=e.clientX;ly=e.clientY;yaw-=dx*k;pitch=clamp(pitch+dy*k,-1.45,1.45);vy=-dx*k;vp=dy*k}});
+const up=e=>{pts.delete(e.pointerId);if(!pts.size)drag=false};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+cv.addEventListener('wheel',e=>{e.preventDefault();fovT=clamp(fovT*(e.deltaY>0?1.07:.93),40,100)},{passive:false});
+function setAuto(v){auto=v;$('auto').classList.toggle('on',v)}
+$('auto').onclick=()=>setAuto(!auto);
+$('full').onclick=()=>{if(!document.fullscreenElement){document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(()=>{})}else document.exitFullscreen()};
+$('gyro').onclick=async()=>{
+ if(gyroOn){gyroOn=false;removeEventListener('deviceorientation',onGyro);$('gyro').classList.remove('on');return}
+ try{if(window.DeviceOrientationEvent&&DeviceOrientationEvent.requestPermission){if(await DeviceOrientationEvent.requestPermission()!=='granted')return}}catch(e){return}
+ if(!window.DeviceOrientationEvent){alert('Motion sensors are not available on this device.');return}
+ gyroOn=true;g0=null;setAuto(false);addEventListener('deviceorientation',onGyro);$('gyro').classList.add('on')};
+function onGyro(e){if(e.alpha==null||e.beta==null)return;if(g0===null)g0={a:e.alpha,y:yaw};yaw=g0.y-(e.alpha-g0.a)*rad;pitch=clamp((e.beta-90)*rad,-1.45,1.45)}
+const chips=$('chips'),card=$('card'),hsL=$('hs');
+Object.keys(SC).forEach(id=>{const b=mk('button','btn',SC[id].k);b.type='button';b.id='chip-'+id;b.onclick=()=>go(id);chips.append(b)});
+function build(id){
+ const s=SC[id];[...chips.children].forEach(b=>b.classList.toggle('on',b.id==='chip-'+id));
+ card.innerHTML='';const ins=mk('div','ins');ins.hidden=true;card.append(mk('h2','',s.t),mk('p','',s.d),ins);
+ if(s.vid){const v=mk('button','btn gold','▶ Watch video');v.type='button';v.onclick=()=>{$('vvid').src=s.vid.v;$('vvid').poster=s.vid.p;$('vmodal').hidden=false;$('vvid').muted=true;$('vvid').play().catch(()=>{})};card.append(v)}
+ card.append(mk('small','','Tour visuals are AI-generated illustrations of our Karachi campus.'));
+ hsL.innerHTML='';
+ s.hs.forEach(h=>{const b=mk('button','hot');b.type='button';b.append(mk('span','pin','➜'),mk('span','lab',h.l));b.onclick=()=>go(h.to);b.onpointerenter=()=>{hov=true};b.onpointerleave=()=>{hov=false};h.el=b;hsL.append(b)});
+ s.info.forEach(h=>{const b=mk('button','hot info');b.type='button';b.append(mk('span','pin','i'),mk('span','lab',h.t));b.onpointerenter=()=>{hov=true};b.onpointerleave=()=>{hov=false};b.onclick=()=>{ins.innerHTML='';ins.append(mk('b','',h.t+': '),document.createTextNode(h.d));ins.hidden=false};h.el=b;hsL.append(b)});
+}
+function place(id,instant){const s=SC[id];cur=id;tex=TX[id];setTimeout(()=>s.hs.forEach(h=>ensure(h.to,()=>{})),700);yaw=s.st.lon*rad;pitch=clamp(s.st.lat*rad*.5,-.3,.3);build(id);try{history.replaceState(null,'','#'+id)}catch(e){}if(!instant){fov=100}}
+function go(id){
+ if(busy||id===cur||!gl)return;busy=true;$('fade').classList.add('on');fovT=46;
+ setTimeout(()=>{ensure(id,()=>{place(id);fovT=80;$('fade').classList.remove('on');setTimeout(()=>{busy=false},400)})},430)}
+$('vclose').onclick=()=>{$('vmodal').hidden=true;$('vvid').pause()};
+addEventListener('keydown',e=>{
+ if(e.key==='Escape'){if(!$('vmodal').hidden)$('vclose').click();return}
+ const dm=$('demo-modal');if(dm&&!dm.hidden)return;setAuto(false);
+ if(e.key==='ArrowLeft')yaw-=.08;else if(e.key==='ArrowRight')yaw+=.08;else if(e.key==='ArrowUp')pitch=clamp(pitch+.06,-1.45,1.45);else if(e.key==='ArrowDown')pitch=clamp(pitch-.06,-1.45,1.45)});
+function rot(v){const cp=Math.cos(pitch),sp=Math.sin(pitch),cy=Math.cos(yaw),sy=Math.sin(yaw),y1=v[1]*cp-v[2]*sp,z1=v[1]*sp+v[2]*cp;return[v[0]*cy-z1*sy,y1,v[0]*sy+z1*cy]}
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+function frame(){
+ requestAnimationFrame(frame);if(!tex)return;
+ if(!drag){yaw+=vy;pitch=clamp(pitch+vp,-1.45,1.45);vy*=.92;vp*=.92}
+ if(auto&&!hov&&!busy&&!drag&&!gyroOn)yaw+=.0011;
+ fov+=(fovT-fov)*.12;
+ gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);gl.uniform1i(uni.tx,0);gl.uniform2f(uni.res,cv.width,cv.height);gl.uniform1f(uni.yaw,yaw);gl.uniform1f(uni.pitch,pitch);gl.uniform1f(uni.fovy,fov*rad);
+ gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+ const s=SC[cur];if(!s)return;const R=rot([1,0,0]),U=rot([0,1,0]),F=rot([0,0,-1]),f=Math.tan(fov*rad/2),asp=innerWidth/innerHeight;
+ [...s.hs,...s.info].forEach(h=>{if(!h.el)return;const lo=h.lon*rad,la=h.lat*rad,w=[Math.cos(la)*Math.sin(lo),Math.sin(la),-Math.cos(la)*Math.cos(lo)],sf=dot(w,F);
+  if(sf<.05){h.el.style.display='none';return}
+  const nx=dot(w,R)/sf/(f*asp),ny=dot(w,U)/sf/f;if(Math.abs(nx)>1.15||Math.abs(ny)>1.15){h.el.style.display='none';return}
+  h.el.style.display='flex';h.el.style.transform='translate('+((nx+1)/2*innerWidth)+'px,'+((1-ny)/2*innerHeight)+'px) translate(-50%,-50%)'})}
+(function init(){
+ if(!gl){card.append(mk('h2','','360° view not supported'),mk('p','','This browser cannot show the 360° tour. Please try Chrome, Edge, Safari or Firefox.'));return}
+ const h=location.hash.slice(1),startId=SC[h]?h:'out';
+ $('fade').classList.add('on');requestAnimationFrame(frame);
+ ensure(startId,()=>{place(startId,true);fov=fovT=80;$('fade').classList.remove('on')});
+})();
+</script>
+</body></html>

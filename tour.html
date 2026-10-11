@@ -126,7 +126,7 @@ function build(id){
  const s=SC[id];[...chips.children].forEach(b=>b.classList.toggle('on',b.id==='chip-'+id));
  card.innerHTML='';const ins=mk('div','ins');ins.hidden=true;card.append(mk('h2','',s.t),mk('p','',s.d),ins);
  if(s.vid){const v=mk('button','btn gold','▶ Watch video');v.type='button';v.onclick=()=>{$('vvid').src=s.vid.v;$('vvid').poster=s.vid.p;$('vmodal').hidden=false;$('vvid').muted=true;$('vvid').play().catch(()=>{})};card.append(v)}
- card.append(mk('small','','Tour visuals are AI-generated illustrations of our Karachi campus.'));
+
  hsL.innerHTML='';
  s.hs.forEach(h=>{const b=mk('button','hot');b.type='button';b.append(mk('span','pin','➜'),mk('span','lab',h.l));b.onclick=()=>go(h.to);b.onpointerenter=()=>{hov=true};b.onpointerleave=()=>{hov=false};h.el=b;hsL.append(b)});
  s.info.forEach(h=>{const b=mk('button','hot info');b.type='button';b.append(mk('span','pin','i'),mk('span','lab',h.t));b.onpointerenter=()=>{hov=true};b.onpointerleave=()=>{hov=false};b.onclick=()=>{ins.innerHTML='';ins.append(mk('b','',h.t+': '),document.createTextNode(h.d));ins.hidden=false};h.el=b;hsL.append(b)});
